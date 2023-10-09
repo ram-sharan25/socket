@@ -1,30 +1,39 @@
 const express = require("express");
-const socket = require("socket.io");
+const { Server } = require("socket.io");
+const http = require("http");
 
 const PORT = 4000;
 const app = express();
-const server = app.listen(PORT, function () {
-  console.log(`Listening on port ${PORT} `);
-  console.log(`http://localhost:${PORT}`);
+const server = http.createServer(app);
+const io = new Server(server);
+
+server.listen(PORT, () => {
+  console.log("Listening on port ", PORT);
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html");
 });
 
 app.use(express.static("public"));
 
-const io = socket(server);
+// io.on("connection", (socket) => {
+//   socket.on("chat message", (msg) => {
+//     io.emit("chat massage", msg);
+//   });
 
-const activeUsers = new Set();
+//   socket.on("disconnect", () => {
+//     io.emit("chat message", "User Dissconnected");
+//     console.log("User Disconnected");
+//   });
+// });
 
-io.on("connection", function (socket) {
-  console.log("Made socket conneciton");
-
-  socket.on("new user", function (data) {
-    socket.userId = data;
-    activeUsers.add(data);
-    io.emit("new user", [...activeUsers]);
-  });
+io.on("connection", (socket) => {
+  console.log("User connected");
+  io.emit("User Connected");
 
   socket.on("disconnect", () => {
-    activeUsers.delete(socket.userId);
-    io.emit("user disconnected", socket.userId);
+    io.emit("chat message", "User Dissconnected");
+    console.log("User Disconnected");
   });
 });
